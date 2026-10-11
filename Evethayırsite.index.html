@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Evet mi Hayır mı?</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{background:#fff;color:#111;font-family:Georgia,"Times New Roman",serif;overflow:hidden;transition:background .05s,color .05s}
+body.dark{background:#000;color:#eee}
+body.dark .card{border-color:#600}
+#vig{position:fixed;inset:0;pointer-events:none;box-shadow:inset 0 0 0 rgba(120,0,0,0);transition:box-shadow 1.2s;z-index:5}
+.wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:16px}
+.card{width:min(560px,100%);border:2px solid #111;padding:clamp(20px,5vw,40px);text-align:center;position:relative;background:inherit}
+h1{font-size:clamp(28px,7vw,44px);margin:0 0 6px;letter-spacing:1px;color:#8a0000;font-weight:normal;font-style:italic}
+.sub{margin:0 0 22px;color:#555;font-size:15px}
+label{display:block;text-align:left;font-size:16px;margin:12px 0 6px}
+input{width:100%;font:inherit;font-size:18px;padding:12px;border:2px solid #111;background:#fff;color:#111;border-radius:0}
+.err{color:#b00;font-size:14px;min-height:20px;margin-top:8px}
+button{font:inherit;cursor:pointer;border-radius:0}
+.go{margin-top:12px;background:#111;color:#fff;border:0;padding:14px 28px;font-size:18px}
+.go:active{background:#8a0000}
+#q{font-size:clamp(20px,5vw,28px);line-height:1.35;min-height:130px;display:flex;align-items:center;justify-content:center;margin:10px 0 18px}
+.btns{display:flex;gap:12px}
+.btns button{flex:1;padding:clamp(18px,5vw,26px) 0;font-size:clamp(20px,5vw,26px);border:2px solid #111;background:#fff;color:#111;transition:transform .08s}
+.btns button:active{transform:scale(.94)}
+#bYes:active{background:#111;color:#fff}#bNo:active{background:#8a0000;color:#fff;border-color:#8a0000}
+.meta{display:flex;justify-content:space-between;font-size:14px;color:#666;margin-bottom:6px}
+#dots{min-height:22px;letter-spacing:6px;color:#8a0000;font-size:20px}
+#tbar{height:6px;background:#8a0000;width:100%;transform-origin:left;margin:0 0 10px;visibility:hidden}
+.screen{display:none}.screen.on{display:block}
+.in{animation:in .45s ease-out}
+.out{animation:out .3s ease-in forwards}
+@keyframes in{from{opacity:0;transform:translateX(40px);filter:blur(6px)}to{opacity:1;transform:none;filter:none}}
+@keyframes out{to{opacity:0;transform:translateX(-40px);filter:blur(6px)}}
+.ok{animation:ok .5s}
+@keyframes ok{0%{box-shadow:0 0 0 0 rgba(138,0,0,.7)}100%{box-shadow:0 0 0 40px rgba(138,0,0,0)}}
+.shake{animation:shake .5s}
+@keyframes shake{20%{transform:translate(-14px,6px) rotate(-1.5deg)}40%{transform:translate(12px,-6px) rotate(1.5deg)}60%{transform:translate(-10px,4px)}80%{transform:translate(8px,-3px)}}
+#fail{position:fixed;inset:0;background:#000;color:#c00;display:none;align-items:center;justify-content:center;flex-direction:column;z-index:20;text-align:center;padding:20px}
+#fail .eye{font-size:min(60vw,320px);line-height:1;animation:pulse .25s infinite alternate}
+#fail p{font-size:clamp(22px,6vw,36px);margin:0;font-style:italic}
+@keyframes pulse{from{transform:scale(1)}to{transform:scale(1.12)}}
+#fly{position:fixed;width:9px;height:9px;background:#000;border-radius:50%;z-index:15;display:none;box-shadow:-5px -3px 0 -2px rgba(0,0,0,.45),5px -3px 0 -2px rgba(0,0,0,.45)}
+#whisper{position:fixed;font-style:italic;color:rgba(138,0,0,.0);font-size:18px;pointer-events:none;z-index:4;transition:color 1s}
+#drip{position:fixed;top:0;left:0;right:0;height:0;background:linear-gradient(#8a0000,#4a0000);z-index:12;transition:height 1.2s}
+.big{font-size:clamp(22px,6vw,32px);margin:10px 0}
+html,body{overflow-x:hidden;width:100%}
+.wrap{min-height:100vh;min-height:100dvh}
+.card{overflow:hidden;overflow-wrap:anywhere}
+#q{height:180px;min-height:0;overflow:hidden;padding:0 4px;font-size:clamp(18px,4.8vw,26px)}
+#dots{height:28px;line-height:28px;overflow:hidden;white-space:nowrap;letter-spacing:4px}
+.meta{height:20px}#prog{display:none}
+.btns button{min-width:0}
+@keyframes in{from{opacity:0;filter:blur(6px);transform:scale(.97)}to{opacity:1;filter:none;transform:none}}
+@keyframes out{to{opacity:0;filter:blur(6px);transform:scale(1.03)}}
+#whisper{max-width:70vw}
+</style>
+</head>
+<body>
+<div id="vig"></div><div id="drip"></div><div id="fly"></div><div id="whisper"></div>
+<div id="fail"><div class="eye">👁</div><p id="failTxt">YANLIŞ... başa dönüyorsun</p></div>
+
+<div class="wrap"><div class="card" id="card">
+
+<div class="screen on" id="sLogin">
+  <h1>Evet mi, Hayır mı?</h1>
+  <p class="sub">Dikkatini topla. Burada hata affedilmez.</p>
+  <label for="name">Kim olarak giriyorsun?</label>
+  <input id="name" placeholder="İsmini yaz" autocomplete="name" maxlength="30">
+  <label for="mail">Gmail adresin?</label>
+  <input id="mail" type="email" placeholder="ornek@gmail.com" autocomplete="email" inputmode="email">
+  <div class="err" id="err"></div>
+  <button class="go" id="start">Karanlığa gir</button>
+</div>
+
+<div class="screen" id="sGame">
+  <div class="meta"><span id="who"></span><span id="prog"></span><span id="att"></span></div>
+  <div id="tbar"></div>
+  <div id="q"></div>
+  <div id="dots"></div>
+  <div class="btns" id="btns"><button id="bYes" data-v="y">EVET</button><button id="bNo" data-v="n">HAYIR</button></div>
+</div>
+
+<div class="screen" id="sWin">
+  <h1>Hayatta kaldın...</h1>
+  <p class="big" id="winTxt"></p>
+  <p class="sub">Ya da öyle sanıyorsun.</p>
+  <button class="go" id="again">Tekrar dene</button>
+</div>
+
+</div></div>
+
+<script>
+/* ================= SORULAR =================
+ Format: "soru|cevap|bayraklar"   cevap: y=EVET, n=HAYIR
+ Bayraklar: f=sinek geçer, s=butonlar yer değiştirir, t4=4 sn süre, n3=doğru butona 3 kere bas
+ Zincir: iç içe dizi, sorular o sırayla gelir. Her denemede havuzdan rastgele seçilir. */
+const P=s=>{const [t,a,f='']=s.split('|');const q={t,a};if(/f/.test(f))q.fly=1;if(/s/.test(f))q.swap=1;let m=f.match(/t(\d+)/);if(m)q.time=+m[1];m=f.match(/n(\d+)/);if(m)q.need=+m[1];return q};
+const RULE="Bundan sonraki sorularda <b>SİNEK</b> görürsen EVET'e bas. Görmezsen soruya normal cevap ver. Anladıysan EVET'e bas.|y";
+const LASTS=["Son soru: Hâlâ buradasın, değil mi?|y|t4","Son soru: Buradan çıkabileceğini sanıyorsan HAYIR'a bas.|n|t4"];
+const FLYQ=["Karanlıktan korkar mısın?|n|f","Arkanda biri var mı?|n|f","Güneş batıdan doğar.|n|f","Balinalar balıktır.|n|f","Haftada 8 gün vardır.|n|f","Bu odada senden başka biri var mı?|n|f","Örümceğin 6 bacağı vardır.|n|f","Gece yarısından bir saat önce saat 01:00'dir.|n|f","Yarasalar kördür.|n|f","Şu an kapı açık mı?|n|f"];
+const CHAINS=[
+["2 soru sonra EVET'e <b>3 kere</b> bas. Şimdilik HAYIR'a bas.|n","Gökyüzü gündüz mavi görünür.|y","Kapı kilitli mi?|y|n3"],
+["3 soru sonra HAYIR'a <b>2 kere</b> bas. Şimdi EVET'e bas.|y","7 + 5 = 12|y","Ay'ın kendi ışığı vardır.|n","Arkana bakma.|n|n2"],
+["Bir sonraki soruda EVET'e <b>4 kere</b> bas. Şimdilik HAYIR'a bas.|n","Duyuyor musun?|y|n4"],
+["2 soru sonra HAYIR'a <b>3 kere</b> bas. Şimdi EVET'e bas.|y","Bir yılda 12 ay vardır.|y","Gölge ışıksız oluşur.|n","Kimse yok mu?|n|n3"],
+["Bir sonraki soruda EVET'e <b>2 kere</b> bas. Önce HAYIR'a bas.|n","Fısıltıyı duydun mu?|y|n2"],
+["3 soru sonra EVET'e <b>5 kere</b> bas. Şimdi HAYIR'a bas.|n","Bir düzine 12 tanedir.|y","10'un yarısı 5'tir.|y","Hâlâ buradasın.|y|n5"]
+];
+const NORMAL=[
+// bilgi
+"Bir yılda 12 ay vardır.|y","Su deniz seviyesinde 100 derecede kaynar.|y","Işık sesten hızlıdır.|y","Türkiye'nin başkenti İstanbul'dur.|n","Dünya Güneş'in etrafında döner.|y","İnsan vücudunda 206 kemik vardır.|y","Kırmızı ile sarıyı karıştırırsan turuncu olur.|y","Mavi ile sarıyı karıştırırsan yeşil olur.|y","Penguenler uçabilir.|n","Kediler süt yemeden yaşayamaz.|n","Mumyalar eski Mısır'da yapılırdı.|y","Ay, Dünya'nın uydusudur.|y","Bir haftada 7 gün vardır.|y","Güneş bir yıldızdır.|y","Altın bir madendir.|y","Yarasalar memelidir.|y","Kelebekler önce tırtıl olarak yaşar.|y","Buz suyun katı hâlidir.|y","Ay'a ayakla ilk basan kişi Neil Armstrong'tur.|y","Dünya'nın tek uydusu vardır.|y","Okyanuslar tatlı sudur.|n","Ateş soğuktur.|n","Bir üçgenin 3 kenarı vardır.|y","Bir karenin 5 köşesi vardır.|n","Bir dakikada 60 saniye vardır.|y","Bir saatte 100 dakika vardır.|n","Gökkuşağında 7 renk sayılır.|y","Arılar bal yapar.|y","Elmas çok yumuşaktır.|n","Kar yağarken hava genellikle sıcaktır.|n","Sıfır çift bir sayıdır.|y","Bir eli 5 parmaktır, iki elde 10 parmak vardır.|y","Gece ve gündüz Dünya'nın dönmesinden olur.|y","Deniz suyu tuzludur.|y","Bitkiler fotosentez yapar.|y","Hamam böceği kuyruğu kopsa da bir süre yaşayabilir.|y","Bir buçuk, iki'den büyüktür.|n","Tavşanlar yumurtlar.|n","Kutup ayıları Antarktika'da yaşar.|n","Dünya düzdür.|n",
+// mantık ve akıl yürütme
+"Bütün kediler hayvandır. Pamuk kedidir. O hâlde Pamuk hayvandır.|y","Bütün ağaçlar bitkidir. Meşe ağaçtır. O hâlde meşe bitkidir.|y","Bazı kuşlar uçamaz. O hâlde hiçbir kuş uçamaz.|n","Ali Veli'den uzun, Veli Can'dan uzun. Ali Can'dan uzundur.|y","Ali Veli'den uzun, Can Ali'den uzun. Veli en uzundur.|n","Yağmur yağarsa yer ıslanır. Yer ıslak. O hâlde yağmur yağmıştır.|n","Elinde 3 elma var, 2'sini yedin. 1 elman kaldı.|y","Odada 3 kişi var, biri çıktı. Odada 2 kişi kaldı.|y","4 mumdan 2'sini üfledin. Hâlâ yanan 2 mum var.|y","Gece 12'de yağmur yağıyorsa 72 saat sonra güneşli hava olur.|n","Bir tavuk günde 1 yumurta yapıyorsa 2 tavuk 2 günde 4 yumurta yapar.|y","Saatte 60 km giden tren 2 saatte 120 km gider.|y","Yarın, dünden iki gün sonradır.|y","Bugün Pazartesi ise iki gün sonra Çarşamba'dır.|y","Bugün Cuma ise dünden sonraki gün Cumartesi'dir.|n","Çift sayıyla tek sayıyı toplarsan sonuç tektir.|y","İki tek sayının toplamı çifttir.|y","Bir sayıyı sıfırla çarparsan sonuç sayının kendisidir.|n","1'den 10'a kadar 5 tek sayı vardır.|y","Her kare bir dikdörtgendir.|y","Her dikdörtgen bir karedir.|n","A, B'den büyük, B de C'den büyükse C, A'dan büyüktür.|n","Hiç uyumayan biri rüya görmez.|y","Bir odada 5 sandalye ve 5 kişi varsa herkes oturabilir.|y","3 kez zil çalmak, aralarda 1 sn varsa 3 saniye sürer.|n","Bir sayının yarısı 4 ise kendisi 8'dir.|y","Bir sayının iki katı 10 ise kendisi 20'dir.|n","Bir yılın son ayı Aralık'tır.|y","Şubat ayı her yıl 31 gün çeker.|n","Önce 2, sonra 4, sonra 6 geliyorsa sıradaki 8'dir.|y","1, 2, 4, 8 dizisinde sıradaki sayı 16'dır.|y","1, 3, 5, 7 dizisinde sıradaki sayı 8'dir.|n","Gölgen seni her zaman takip eder, ışık varsa.|y","Kapıyı kilitleyen kişi dışarıdadır, anahtar içerideyse bile.|n","Bir şeyi hiç görmediysen onun var olmadığını kanıtlamış olursun.|n","Bir kutuda 2 kırmızı 1 mavi top var. Mavi çekme ihtimali 1/3'tür.|y","Boş bir kutu, içinde hava olduğu için tamamen boş sayılmaz.|y",
+// ürpertici talimatlı
+"Bu soruda HAYIR'a bas.|n","Bu soruda EVET'e bas.|y","Bu sorunun doğru cevabı HAYIR değil.|y","Ekranın arkasında kimse yok. EVET'e bas.|y","Gözlerini kırpma. Sonra HAYIR'a bas.|n","Fısıltıları duyuyorsan HAYIR'a bas. Duymuyorsan da HAYIR'a bas.|n","Korkuyorsan bile EVET'e bas.|y","Odandaki ışığı kapatma. HAYIR'a bas.|n","Yalnız olduğuna emin misin? Ne cevap verirsen ver, EVET'e bas.|y","Kapıya bakma. Bu soruya HAYIR de.|n","Bu soru seni izliyor. HAYIR'a bas.|n","Cevabı EVET sanıyorsun. Doğrusu HAYIR.|n","Bu sorunun cevabı EVET'in tersidir.|n","Bu sorunun cevabı HAYIR'ın tersidir.|y","Bir şey sana bakıyorsa EVET'e bas, bakmıyorsa EVET'e bas.|y","Ağlayan bebek sesi duydun mu? Duymadıysan EVET'e bas.|y","Karanlıkta bile EVET'e basabilirsin.|y","Kendi adını biliyorsun. EVET'e bas.|y","Arkadan ayak sesi geliyorsa HAYIR'a bas, gelmiyorsa HAYIR'a bas.|n","Bu soruyu okuduysan HAYIR'a bas.|n",
+// hızlı ve yer değiştirmeli
+"Çabuk! EVET'e bas!|y|t3","Hemen HAYIR'a bas!|n|t3","3 + 4 = 7|y|t4","Dünya düzdür.|n|t4","Haftada 7 gün vardır.|y|t4","Butonların yeri değişti. EVET'e bas.|y|s","Butonların yeri değişti. HAYIR'a bas.|n|s","Güneş bir yıldızdır.|y|s","Ateş soğuktur.|n|s","Gökyüzü yeşildir.|n|s|t5","İki artı iki dörttür.|y|s|t4","Buzlu su sıcaktır.|n|s|t4","Arılar bal yapar.|y|s","Kar yağarken hava çok sıcaktır.|n|s"
+];
+const pick=(a,n)=>shuffle(a).slice(0,n);
+const GEN=()=>{const a=2+Math.random()*18|0,b=2+Math.random()*18|0,op=Math.random()<.5,c=op?a+b:a*b,ok=Math.random()<.5,sh=ok?c:c+(Math.random()<.5?1:-1)*(1+Math.random()*3|0);return P(`${a} ${op?'+':'×'} ${b} = ${sh}|${ok?'y':'n'}`)};
+
+/* ================= YARDIMCILAR ================= */
+const $=id=>document.getElementById(id);
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+let user={}, list=[], idx=0, attempts=1, locked=true, flySeen=false, presses=0, timer=null, flyTimer=null, ac=null;
+
+/* ================= SES ================= */
+function audio(){ if(!ac){try{ac=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}} if(ac&&ac.state==='suspended')ac.resume(); }
+function tone(f,d,type='sine',v=.15,slide){ if(!ac)return; const o=ac.createOscillator(),g=ac.createGain(); o.type=type;o.frequency.value=f; if(slide)o.frequency.exponentialRampToValueAtTime(slide,ac.currentTime+d); g.gain.setValueAtTime(v,ac.currentTime); g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d); o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d); }
+function noise(d,v=.3){ if(!ac)return; const b=ac.createBuffer(1,ac.sampleRate*d,ac.sampleRate),x=b.getChannelData(0); for(let i=0;i<x.length;i++)x[i]=Math.random()*2-1; const s=ac.createBufferSource(),g=ac.createGain(); s.buffer=b; g.gain.setValueAtTime(v,ac.currentTime); g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d); s.connect(g);g.connect(ac.destination);s.start(); }
+function buzz(dur){ if(!ac)return; const o=ac.createOscillator(),l=ac.createOscillator(),lg=ac.createGain(),g=ac.createGain(); o.type='sawtooth';o.frequency.value=230; l.frequency.value=70;lg.gain.value=60; l.connect(lg);lg.connect(o.frequency); g.gain.setValueAtTime(.0001,ac.currentTime); g.gain.linearRampToValueAtTime(.12,ac.currentTime+dur*.4); g.gain.linearRampToValueAtTime(.0001,ac.currentTime+dur); let out=g; if(ac.createStereoPanner){const p=ac.createStereoPanner();p.pan.setValueAtTime(-1,ac.currentTime);p.pan.linearRampToValueAtTime(1,ac.currentTime+dur);g.connect(p);p.connect(ac.destination)}else g.connect(ac.destination); o.connect(g);o.start();l.start();o.stop(ac.currentTime+dur);l.stop(ac.currentTime+dur); }
+const sOk=()=>{tone(180,.25,'sine',.2,60);setTimeout(()=>tone(90,.2,'sine',.15),120)};
+const sTick=()=>tone(520,.06,'square',.05);
+function sScare(){ noise(1,.5); tone(900,1,'sawtooth',.25,60); tone(130,1.2,'square',.2,40); }
+
+/* ================= OYUN AKIŞI ================= */
+function build(){
+  const groups=[...pick(NORMAL,16).map(x=>[P(x)]),...Array.from({length:4},()=>[GEN()]),...pick(CHAINS,2).map(c=>c.map(P)),...pick(FLYQ,2).map(x=>[P(x)])];
+  list=[].concat(P(RULE),...shuffle(groups),P(pick(LASTS,1)[0]));
+}
+function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on')); $(id).classList.add('on'); }
+
+$('start').onclick=()=>{
+  const n=$('name').value.trim(), m=$('mail').value.trim().toLowerCase();
+  if(n.length<2) return $('err').textContent='Adını yazmadan giremezsin.';
+  if(!/^[a-z0-9._%+-]+@gmail\.com$/.test(m)) return $('err').textContent='Geçerli bir @gmail.com adresi yaz.';
+  user={n,m}; audio(); $('who').textContent=n; attempts=1; startRun(); show('sGame');
+};
+$('again').onclick=()=>{attempts=1;startRun();show('sGame')};
+
+function startRun(){ build(); idx=0; $('att').textContent='Deneme: '+attempts; document.body.classList.remove('dark'); $('drip').style.height=0; loadQ(); }
+
+function loadQ(){
+  clearTimeout(timer); clearTimeout(flyTimer);
+  const q=list[idx]; flySeen=false; presses=0; locked=false;
+  $('prog').textContent=(idx+1)+' / '+list.length;
+  $('q').innerHTML=q.t;
+  $('dots').textContent=q.need?'○ '.repeat(q.need).trim():'';
+  const b=$('btns'); b.style.flexDirection=q.swap?'row-reverse':'row';
+  const tb=$('tbar'); tb.style.visibility=q.time?'visible':'hidden'; tb.style.transition='none'; tb.style.transform='scaleX(1)';
+  if(q.time){ void tb.offsetWidth; tb.style.transition='transform '+q.time+'s linear'; tb.style.transform='scaleX(0)'; timer=setTimeout(()=>fail('Çok yavaşsın...'),q.time*1000); }
+  if(q.fly) flyTimer=setTimeout(sendFly,1400+Math.random()*1800);
+  const g=$('sGame'); g.classList.remove('in'); void g.offsetWidth; g.classList.add('in');
+  vignette(); if(Math.random()<.35) whisper();
+}
+
+function answer(v){
+  if(locked) return; audio();
+  const q=list[idx];
+  let want=(q.fly&&flySeen)?'y':q.a;
+  if(v!==want) return fail(q.fly&&flySeen&&v==='n'?'Sineği görmedin mi?':'Yanlış...');
+  presses++;
+  if(q.need&&presses<q.need){ sTick(); $('dots').textContent='● '.repeat(presses)+'○ '.repeat(q.need-presses); return; }
+  if(q.need) $('dots').textContent='● '.repeat(q.need);
+  // doğru
+  locked=true; clearTimeout(timer); clearTimeout(flyTimer); sOk();
+  $('card').classList.remove('ok'); void $('card').offsetWidth; $('card').classList.add('ok');
+  flicker(false);
+  setTimeout(()=>{ $('sGame').classList.remove('in'); $('sGame').classList.add('out'); },350);
+  setTimeout(()=>{ $('sGame').classList.remove('out');
+    idx++; if(idx>=list.length) return win(); loadQ(); },680);
+}
+document.querySelectorAll('#btns button').forEach(b=>b.onclick=()=>answer(b.dataset.v));
+addEventListener('keydown',e=>{ if(!$('sGame').classList.contains('on'))return; const k=e.key.toLowerCase(); if(k==='e')answer('y'); if(k==='h')answer('n'); });
+
+function fail(msg){
+  if(locked&&$('fail').style.display==='flex') return; locked=true; clearTimeout(timer); clearTimeout(flyTimer);
+  $('failTxt').textContent=msg+' Başa dönüyorsun.';
+  $('card').classList.add('shake'); sScare(); if(navigator.vibrate)navigator.vibrate([200,80,300]);
+  $('drip').style.height='100%';
+  setTimeout(()=>{ $('fail').style.display='flex'; },250);
+  setTimeout(()=>{ $('fail').style.display='none'; $('card').classList.remove('shake'); attempts++; startRun(); },2100);
+}
+function win(){
+  $('winTxt').textContent=user.n+', '+attempts+'. denemede bitirdin.'; show('sWin'); flicker(true);
+}
+
+/* ================= EFEKTLER ================= */
+function sendFly(){
+  const f=$('fly'),W=innerWidth,H=innerHeight,dur=700+Math.random()*300;
+  const side=Math.random()<.5, y1=Math.random()*H, y2=Math.random()*H;
+  f.style.display='block'; f.style.transition='none';
+  f.style.left=(side?-20:W+20)+'px'; f.style.top=y1+'px'; void f.offsetWidth;
+  flySeen=true; buzz(dur/1000);
+  f.style.transition='left '+dur+'ms linear, top '+dur+'ms ease-in-out';
+  f.style.left=(side?W+20:-20)+'px'; f.style.top=y2+'px';
+  setTimeout(()=>f.style.display='none',dur+50);
+}
+function vignette(){
+  const p=idx/Math.max(1,list.length-1);
+  $('vig').style.boxShadow='inset 0 0 '+(60+p*160)+'px rgba(120,0,0,'+(.15+p*.5)+')';
+}
+function flicker(heavy){
+  let n=heavy?6:2; const t=()=>{ document.body.classList.toggle('dark'); if(--n>0)setTimeout(t,60+Math.random()*90); else document.body.classList.remove('dark'); }; t();
+}
+const W_TXT=["arkana bak","seni görüyor","yalnız değilsin","kapıyı kontrol et","o hâlâ burada","nefesini duyuyorum"];
+function whisper(){
+  const w=$('whisper'); w.textContent=W_TXT[Math.random()*W_TXT.length|0];
+  w.style.left=(Math.random()*(innerWidth-160))+'px'; w.style.top=(Math.random()*(innerHeight-40))+'px';
+  w.style.color='rgba(138,0,0,.55)'; setTimeout(()=>w.style.color='rgba(138,0,0,0)',900);
+}
+setInterval(()=>{ if($('sGame').classList.contains('on')&&Math.random()<.25) flicker(false) },6000);
+</script>
+</body>
+</html>
